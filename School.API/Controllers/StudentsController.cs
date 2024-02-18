@@ -27,9 +27,9 @@ namespace School.API.Controllers
         {
             try
             {
-            var allStudents = _context.Students.ToList();
+                var allStudents = _context.Students.ToList();
                 //throw new Exception("Could not get data from database");
-            return Ok(allStudents);
+                return Ok(allStudents);
             }
             catch (Exception ex)
             {
@@ -45,10 +45,10 @@ namespace School.API.Controllers
         [HttpGet("get-student-by-id/{id}")]
         public IActionResult GetStudentById(int id)
         {
-            if(id<=0) throw new ArgumentException($"Please, provide an id > 0");
+            if (id <= 0) throw new ArgumentException($"Please, provide an id > 0");
             var allstudents = _context.Students.ToArray();
             var studentsPostion5 = allstudents[4];
-            var studentinfo = _context.Students.FirstOrDefault(studentidentity=>
+            var studentinfo = _context.Students.FirstOrDefault(studentidentity =>
             studentidentity.Id == id);
 
             var studentFullName = studentinfo.FullName;
@@ -62,6 +62,8 @@ namespace School.API.Controllers
             {
                 if (Regex.IsMatch(payload.FullName, @"^\d")) throw new StudentNameExceotion("Name starts with number"
                             , payload.FullName);
+                int age = CalculateAge(payload.DataOfBirth.Date);
+                if (age < 20) throw new StudentAgeExceotion(@"Age lower than 20",age);
                 _context.Students.Add(payload);
                 _context.SaveChanges();
 
@@ -71,6 +73,23 @@ namespace School.API.Controllers
             {
                 return BadRequest($"{ex.StudentName} Start with a digit");
             }
+            catch (StudentAgeExceotion ex)
+            {
+                return BadRequest($"Your age is {ex.Age} is lower then 20");
+            }
+        }
+        static int CalculateAge(DateTime dateOfBirth)
+        {
+            DateTime now = DateTime.Today;
+            int age = now.Year - dateOfBirth.Year;
+
+            // Subtract a year if the birthday hasn't occurred yet this year
+            if (now < dateOfBirth.AddYears(age))
+            {
+                age--;
+            }
+
+            return age;
         }
     }
 }
